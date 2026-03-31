@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Stack Calculator — 2026 Edition</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400&family=JetBrains+Mono:wght@300;400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0a0a0f;
+  --bg2: #111118;
+  --bg3: #18181f;
+  --bg4: #1e1e28;
+  --border: rgba(255,255,255,0.07);
+  --border-hover: rgba(255,255,255,0.15);
+  --gold: #c9a84c;
+  --gold2: #e8c96e;
+  --cream: #f0ead8;
+  --muted: rgba(240,234,216,0.45);
+  --muted2: rgba(240,234,216,0.25);
+  --accent-google: #4e9af1;
+  --accent-anthropic: #a78bfa;
+  --accent-openai: #34d399;
+  --accent-perplexity: #fb923c;
+  --accent-xai: #f87171;
+  --accent-microsoft: #38bdf8;
+  --accent-github: #94a3b8;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 15px; scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--cream);
+  font-family: 'JetBrains Mono', monospace;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* ─── Layout ─── */
+.shell { display: flex; min-height: 100vh; }
+.main { flex: 1; min-width: 0; padding: 0 0 120px; }
+.sidebar {
+  width: 340px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  background: var(--bg2);
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+}
+
+/* ─── Header ─── */
+.header {
+  padding: 48px 48px 36px;
+  border-bottom: 1px solid var(--border);
+  position: relative;
+  overflow: hidden;
+}
+.header::before {
+  content: '';
+  position: absolute;
+  top: -60px; left: -40px;
+  width: 300px; height: 300px;
+  background: radial-gradient(circle, rgba(201,168,76,0.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+.header-eyebrow {
+  font-family: 'Syne', sans-serif;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.25em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 14px;
+}
+.header h1 {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 46px;
+  font-weight: 400;
+  line-height: 1.05;
+  color: var(--cream);
+  margin-bottom: 12px;
+}
+.header h1 em {
+  font-style: italic;
+  color: var(--gold2);
+}
+.header-sub {
+  font-size: 11.5px;
+  color: var(--muted);
+  line-height: 1.7;
+  max-width: 540px;
+}
+.header-meta {
+  margin-top: 24px;
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+.meta-chip {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  color: var(--muted2);
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  border-radius: 2px;
+}
+
+/* ─── Filter bar ─── */
+.filter-bar {
+  padding: 20px 48px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.filter-label { font-size: 10px; letter-spacing: 0.12em; color: var(--muted2); margin-right: 4px; }
+.filter-btn {
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 5px 12px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition: all 0.15s;
+  letter-spacing: 0.05em;
+}
+.filter-btn:hover { border-color: var(--border-hover); color: var(--cream); }
+.filter-btn.active { background: var(--gold); border-color: var(--gold); color: var(--bg); }
+
+/* ─── Company sections ─── */
+.section { padding: 36px 48px 0; }
+.section-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+.section-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.section-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.section-count { font-size: 10px; color: var(--muted2); margin-left: auto; letter-spacing: 0.08em; }
+.section-line { flex: 1; height: 1px; background: var(--border); }
+
+/* ─── Tool cards grid ─── */
+.cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.tool-card {
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 18px 20px;
+  transition: border-color 0.2s, background 0.2s;
+  cursor: default;
+  position: relative;
+  overflow: hidden;
+}
+.tool-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+.tool-card:hover { border-color: var(--border-hover); background: var(--bg3); }
+.tool-card.selected { background: var(--bg3); }
+.tool-card.selected::before { opacity: 1; }
+
+.card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+.card-name {
+  font-family: 'Syne', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--cream);
+  line-height: 1.3;
+}
+.card-cat {
+  font-size: 9px;
+  letter-spacing: 0.12em;
+  color: var(--muted2);
+  text-transform: uppercase;
+  margin-top: 3px;
+}
+.add-btn {
+  width: 24px; height: 24px;
+  border-radius: 2px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 16px;
+  line-height: 1;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+  margin-left: 8px;
+}
+.add-btn:hover { border-color: var(--gold); color: var(--gold); }
+.add-btn.added { background: var(--gold); border-color: var(--gold); color: var(--bg); }
+
+.card-desc { font-size: 11px; color: var(--muted); line-height: 1.65; margin-bottom: 12px; }
+
+.tier-select-wrap { position: relative; }
+.tier-select {
+  width: 100%;
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  color: var(--cream);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  padding: 7px 10px;
+  border-radius: 2px;
+  appearance: none;
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+.tier-select:hover, .tier-select:focus { border-color: var(--border-hover); outline: none; }
+.tier-arrow {
+  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+  pointer-events: none; color: var(--muted2); font-size: 9px;
+}
+
+.card-price {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 10px;
+}
+.price-val {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--gold2);
+}
+.price-period { font-size: 10px; color: var(--muted2); }
+
+/* ─── Sidebar / Cart ─── */
+.sidebar-header {
+  padding: 32px 28px 24px;
+  border-bottom: 1px solid var(--border);
+}
+.sidebar-eyebrow {
+  font-size: 9px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--muted2);
+  margin-bottom: 10px;
+}
+.sidebar-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--cream);
+}
+
+.stack-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 20px 28px;
+}
+.stack-empty {
+  text-align: center;
+  padding: 40px 0;
+  color: var(--muted2);
+  font-size: 11px;
+  line-height: 1.8;
+  border: 1px dashed var(--border);
+  border-radius: 4px;
+}
+.stack-empty-icon {
+  font-size: 28px;
+  display: block;
+  margin-bottom: 12px;
+  opacity: 0.4;
+}
+
+.stack-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
+  animation: slideIn 0.2s ease;
+}
+@keyframes slideIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
+.stack-item-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+.stack-item-info { flex: 1; min-width: 0; }
+.stack-item-name { font-family: 'Syne', sans-serif; font-size: 11px; font-weight: 600; color: var(--cream); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stack-item-tier { font-size: 10px; color: var(--muted2); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.stack-item-price { font-family: 'Cormorant Garamond', serif; font-size: 15px; color: var(--gold); flex-shrink: 0; }
+.stack-remove { background: none; border: none; color: var(--muted2); cursor: pointer; font-size: 14px; padding: 0 2px; transition: color 0.15s; flex-shrink: 0; }
+.stack-remove:hover { color: var(--accent-xai); }
+
+/* ─── Total ─── */
+.total-section {
+  padding: 20px 28px;
+  border-top: 1px solid var(--border);
+  background: var(--bg2);
+}
+.total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+  font-size: 10px;
+  color: var(--muted2);
+  letter-spacing: 0.05em;
+}
+.total-big {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 20px;
+}
+.total-label {
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--cream);
+}
+.total-amount {
+  font-family: 'Cormorant Garamond', serif;
+  font-size: 36px;
+  font-weight: 400;
+  color: var(--gold2);
+  transition: all 0.3s;
+}
+
+.action-btns { display: flex; flex-direction: column; gap: 8px; }
+.btn-primary {
+  width: 100%;
+  padding: 12px;
+  background: var(--gold);
+  color: var(--bg);
+  border: none;
+  border-radius: 2px;
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-primary:hover { background: var(--gold2); }
+.btn-secondary {
+  width: 100%;
+  padding: 10px;
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  font-family: 'Syne', sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.btn-secondary:hover { border-color: var(--border-hover); color: var(--cream); }
+
+/* ─── Modal / Share ─── */
+.modal-overlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 100;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--bg2);
+  border: 1px solid var(--border-hover);
+  border-radius: 6px;
+  padding: 36px;
+  width: 540px;
+  max-width: 90vw;
+  max-height: 85vh;
+  overflow-y: auto;
+  transform: translateY(12px);
+  transition: transform 0.2s;
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 28px; }
+.modal-title { font-family: 'Cormorant Garamond', serif; font-size: 28px; font-weight: 400; color: var(--cream); }
+.modal-close { background: none; border: none; color: var(--muted2); font-size: 20px; cursor: pointer; padding: 4px; }
+.modal-close:hover { color: var(--cream); }
+.share-box {
+  background: var(--bg4);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 20px;
+  font-size: 11px;
+  color: var(--cream);
+  line-height: 1.8;
+  white-space: pre-wrap;
+  font-family: 'JetBrains Mono', monospace;
+  margin-bottom: 16px;
+  max-height: 280px;
+  overflow-y: auto;
+}
+.copy-confirm { font-size: 11px; color: var(--accent-openai); margin-top: 8px; height: 16px; transition: opacity 0.3s; }
+
+/* ─── Toast ─── */
+.toast {
+  position: fixed;
+  bottom: 32px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--bg3);
+  border: 1px solid var(--border-hover);
+  color: var(--cream);
+  font-family: 'Syne', sans-serif;
+  font-size: 12px;
+  letter-spacing: 0.05em;
+  padding: 10px 20px;
+  border-radius: 2px;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.25s;
+  z-index: 200;
+  white-space: nowrap;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar { width: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border-hover); border-radius: 2px; }
+
+/* ─── Company color helpers ─── */
+.c-google { color: var(--accent-google); }
+.c-anthropic { color: var(--accent-anthropic); }
+.c-openai { color: var(--accent-openai); }
+.c-perplexity { color: var(--accent-perplexity); }
+.c-xai { color: var(--accent-xai); }
+.c-microsoft { color: var(--accent-microsoft); }
+.c-github { color: var(--accent-github); }
+
+.bg-google { background: var(--accent-google); }
+.bg-anthropic { background: var(--accent-anthropic); }
+.bg-openai { background: var(--accent-openai); }
+.bg-perplexity { background: var(--accent-perplexity); }
+.bg-xai { background: var(--accent-xai); }
+.bg-microsoft { background: var(--accent-microsoft); }
+.bg-github { background: var(--accent-github); }
+
+.border-google::before { background: var(--accent-google); }
+.border-anthropic::before { background: var(--accent-anthropic); }
+.border-openai::before { background: var(--accent-openai); }
+.border-perplexity::before { background: var(--accent-perplexity); }
+.border-xai::before { background: var(--accent-xai); }
+.border-microsoft::before { background: var(--accent-microsoft); }
+.border-github::before { background: var(--accent-github); }
+
+/* ─── Responsive ─── */
+@media (max-width: 900px) {
+  .shell { flex-direction: column; }
+  .sidebar { width: 100%; height: auto; position: static; border-left: none; border-top: 1px solid var(--border); }
+  .header { padding: 32px 24px 24px; }
+  .header h1 { font-size: 34px; }
+  .section { padding: 28px 24px 0; }
+  .filter-bar { padding: 16px 24px; }
+}
+
+@media print {
+  .sidebar { display: none; }
+  .filter-bar { display: none; }
+  .add-btn { display: none; }
+  .tier-select { border: none; background: none; }
+  body { background: white; color: black; }
+  .header h1 { color: black; }
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- ═══ MAIN CONTENT ═══ -->
+  <main class="main">
+
+    <!-- Header -->
+    <div class="header">
+      <div class="header-eyebrow">2026 Edition</div>
+      <h1>AI Stack<br><em>Calculator</em></h1>
+      <p class="header-sub">Build your ideal AI toolkit. Select tools from every major provider, choose your subscription tier, and instantly see your monthly &amp; annual cost. Export your stack as a shareable summary.</p>
+      <div class="header-meta">
+        <span class="meta-chip">30 tools catalogued</span>
+        <span class="meta-chip">7 providers</span>
+        <span class="meta-chip">Pricing verified Mar 2026</span>
+        <span class="meta-chip">Works offline</span>
+      </div>
+    </div>
+
+    <!-- Filter bar -->
+    <div class="filter-bar">
+      <span class="filter-label">Filter:</span>
+      <button class="filter-btn active" data-filter="all">All tools</button>
+      <button class="filter-btn" data-filter="AI Assistant / Chatbot">Chatbots</button>
+      <button class="filter-btn" data-filter="Coding Assistant">Coding</button>
+      <button class="filter-btn" data-filter="AI Search">Search</button>
+      <button class="filter-btn" data-filter="Image Generation">Images</button>
+      <button class="filter-btn" data-filter="Video Generation">Video</button>
+      <button class="filter-btn" data-filter="Developer Platform">Dev APIs</button>
+      <button class="filter-btn" data-filter="Research / Notes">Research</button>
+      <button class="filter-btn" data-filter="Productivity Suite">Productivity</button>
+    </div>
+
+    <!-- Tool sections rendered by JS -->
+    <div id="sections-root"></div>
+
+  </main>
+
+  <!-- ═══ SIDEBAR ═══ -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-eyebrow">Your stack</div>
+      <div class="sidebar-title">Selected tools</div>
+    </div>
+
+    <div class="stack-list" id="stack-list">
+      <div class="stack-empty" id="stack-empty">
+        <span class="stack-empty-icon">◈</span>
+        Add tools from the left to begin building your stack
+      </div>
+    </div>
+
+    <div class="total-section">
+      <div class="total-row">
+        <span id="tool-count">0 tools selected</span>
+        <span></span>
+      </div>
+      <div class="total-row" id="annual-row" style="display:none;">
+        <span>Annual estimate</span>
+        <span id="annual-total">—</span>
+      </div>
+      <div class="total-big">
+        <div class="total-label">Monthly total</div>
+        <div class="total-amount" id="monthly-total">$0</div>
+      </div>
+      <div class="action-btns">
+        <button class="btn-primary" onclick="openShareModal()">Export stack summary</button>
+        <button class="btn-secondary" onclick="clearAll()">Clear all</button>
+      </div>
+    </div>
+  </aside>
+</div>
+
+<!-- ═══ SHARE MODAL ═══ -->
+<div class="modal-overlay" id="modal-overlay" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Your AI Stack</div>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="share-box" id="share-box"></div>
+    <div class="copy-confirm" id="copy-confirm"></div>
+    <div style="display:flex;gap:8px;margin-top:16px;">
+      <button class="btn-primary" style="flex:1" onclick="copyToClipboard()">Copy to clipboard</button>
+      <button class="btn-secondary" style="flex:1" onclick="window.print()">Print / Save PDF</button>
+    </div>
+    <p style="font-size:10px;color:var(--muted2);margin-top:16px;line-height:1.7;">Share this summary with your team, paste it into a proposal, or save it as a PDF for budget planning. Pricing reflects publicly listed rates as of March 2026 and may vary.</p>
+  </div>
+</div>
+
+<!-- ═══ TOAST ═══ -->
+<div class="toast" id="toast"></div>
+
+<script>
+const COMPANIES = [
+  {
+    id: 'google', name: 'Google DeepMind', color: '#4e9af1',
+    tools: [
+      { id:'g1', name:'Gemini App', cat:'AI Assistant / Chatbot', desc:'Multimodal AI assistant across Search, Gmail, Docs, Android & more.',
+        tiers:[{l:'Free — Gemini 3 Flash',p:0},{l:'AI Plus — Limited 3.1 Pro',p:7.99},{l:'AI Pro — Full 3.1 Pro + Workspace',p:19.99},{l:'AI Ultra — Highest access + Veo',p:249.99}] },
+      { id:'g2', name:'NotebookLM', cat:'Research / Notes', desc:'Upload PDFs, videos & docs — AI builds a personal research assistant.',
+        tiers:[{l:'Free — Core features',p:0},{l:'Pro (in AI Pro+)',p:19.99}] },
+      { id:'g3', name:'Google AI Studio', cat:'Developer Platform', desc:'Browser-based hub to prototype with Gemini, Veo, Imagen & more.',
+        tiers:[{l:'Free tier (rate-limited)',p:0},{l:'Pay-as-you-go API',p:null,label:'Usage-based'}] },
+      { id:'g4', name:'Vertex AI', cat:'Developer Platform', desc:'Enterprise ML platform — 200+ models, training, deployment at scale.',
+        tiers:[{l:'Free monthly tier',p:0},{l:'Pay-as-you-go',p:null,label:'Usage-based'},{l:'Enterprise',p:null,label:'Custom'}] },
+      { id:'g5', name:'Flow / Veo', cat:'Video Generation', desc:'Text-to-video filmmaking with cinematic controls and audio generation.',
+        tiers:[{l:'Limited (AI Pro)',p:19.99},{l:'Highest access (AI Ultra)',p:249.99}] },
+      { id:'g6', name:'Imagen / Nano Banana', cat:'Image Generation', desc:'High-fidelity text-to-image generation across Google surfaces.',
+        tiers:[{l:'Free (limited)',p:0},{l:'AI Pro — 1K images/day',p:19.99},{l:'AI Ultra — Highest limits',p:249.99}] },
+      { id:'g7', name:'Gemini Code Assist', cat:'Coding Assistant', desc:'AI code completion and generation inside VS Code & JetBrains.',
+        tiers:[{l:'AI Pro',p:19.99},{l:'AI Ultra (highest limits)',p:249.99},{l:'Workspace add-on',p:null,label:'Custom'}] },
+      { id:'g8', name:'Google Search AI Mode', cat:'AI Search', desc:'AI Overviews + Deep Search for complex multi-step questions.',
+        tiers:[{l:'Free (basic)',p:0},{l:'AI Pro (expanded)',p:19.99},{l:'AI Ultra (highest)',p:249.99}] },
+    ]
+  },
+  {
+    id: 'anthropic', name: 'Anthropic', color: '#a78bfa',
+    tools: [
+      { id:'a1', name:'Claude (Individual)', cat:'AI Assistant / Chatbot', desc:'Safety-focused multimodal AI — writing, coding, analysis, reasoning.',
+        tiers:[{l:'Free — Sonnet 4.6 limited',p:0},{l:'Pro — 5× usage + all models',p:20},{l:'Max 5× — Power users',p:100},{l:'Max 20× — Heavy usage',p:200}] },
+      { id:'a2', name:'Claude (Team)', cat:'AI Assistant / Chatbot', desc:'Collaborative workspace with projects, SSO, and admin controls.',
+        tiers:[{l:'Team Standard — 1.25× Pro',p:25,label:'per seat/mo'},{l:'Team Premium — Claude Code',p:125,label:'per seat/mo'},{l:'Enterprise',p:null,label:'Custom'}] },
+      { id:'a3', name:'Claude Code', cat:'Coding Assistant', desc:'Agentic CLI coding assistant for complex multi-file codebases.',
+        tiers:[{l:'Pro (included)',p:20},{l:'Max 5×',p:100},{l:'Max 20×',p:200},{l:'API pay-as-you-go',p:null,label:'$3–25/MTok'}] },
+      { id:'a4', name:'Claude API', cat:'Developer Platform', desc:'Pay-per-token access — Haiku, Sonnet, Opus with 200K–1M context.',
+        tiers:[{l:'Haiku 4.5 — Fastest',p:null,label:'$1/$5 per MTok'},{l:'Sonnet 4.6 — Balanced',p:null,label:'$3/$15 per MTok'},{l:'Opus 4.6 — Most capable',p:null,label:'$5/$25 per MTok'}] },
+    ]
+  },
+  {
+    id: 'openai', name: 'OpenAI', color: '#34d399',
+    tools: [
+      { id:'o1', name:'ChatGPT (Individual)', cat:'AI Assistant / Chatbot', desc:'The world\'s most-used AI chatbot — reasoning, images, web, agents.',
+        tiers:[{l:'Free — GPT-5.4 mini (ads)',p:0},{l:'Go — More capacity (ads)',p:8},{l:'Plus — Full GPT-5.4',p:20},{l:'Pro — Unlimited access',p:200}] },
+      { id:'o2', name:'ChatGPT (Business)', cat:'AI Assistant / Chatbot', desc:'Team workspace with privacy guarantees and admin controls.',
+        tiers:[{l:'Business — Shared workspace',p:25,label:'per seat/mo (annual)'},{l:'Enterprise — Full governance',p:null,label:'Custom'}] },
+      { id:'o3', name:'Sora', cat:'Video Generation', desc:'AI video generation from text prompts — up to HD quality.',
+        tiers:[{l:'Plus (monthly limits)',p:20},{l:'Pro (higher limits)',p:200},{l:'API',p:null,label:'Usage-based'}] },
+      { id:'o4', name:'DALL-E / GPT Image', cat:'Image Generation', desc:'World-class image generation integrated into ChatGPT.',
+        tiers:[{l:'Free (very limited)',p:0},{l:'Plus',p:20},{l:'Pro',p:200},{l:'API',p:null,label:'Usage-based'}] },
+      { id:'o5', name:'OpenAI API', cat:'Developer Platform', desc:'Pay-per-token GPT-5.4 access — the most capable public model API.',
+        tiers:[{l:'GPT-5 mini',p:null,label:'~$0.15/$0.60/MTok'},{l:'GPT-5.4',p:null,label:'~$2.50/$15/MTok'},{l:'GPT-5.4 Pro',p:null,label:'~$15/$60/MTok'}] },
+      { id:'o6', name:'Codex / o3-pro', cat:'Coding Assistant', desc:'Specialized coding and advanced reasoning models.',
+        tiers:[{l:'Plus (included)',p:20},{l:'Pro (included)',p:200},{l:'API',p:null,label:'Usage-based'}] },
+    ]
+  },
+  {
+    id: 'perplexity', name: 'Perplexity', color: '#fb923c',
+    tools: [
+      { id:'p1', name:'Perplexity AI', cat:'AI Search', desc:'Citation-backed conversational search with real-time web access.',
+        tiers:[{l:'Free — 5 Pro searches/day',p:0},{l:'Education Pro',p:10},{l:'Pro — Unlimited searches',p:20},{l:'Max — All models + Labs',p:200}] },
+      { id:'p2', name:'Perplexity Enterprise', cat:'AI Search', desc:'Secure team research with audit logs, shared knowledge bases.',
+        tiers:[{l:'Enterprise Pro',p:40,label:'per seat/mo'},{l:'Enterprise Max + Comet',p:325,label:'per seat/mo'}] },
+      { id:'p3', name:'Sonar API', cat:'Developer Platform', desc:'API for building apps with search-augmented AI.',
+        tiers:[{l:'Pay-as-you-go',p:null,label:'Credits-based'},{l:'Search API',p:null,label:'$5/1K requests'}] },
+    ]
+  },
+  {
+    id: 'xai', name: 'xAI (Grok)', color: '#f87171',
+    tools: [
+      { id:'x1', name:'Grok (Consumer)', cat:'AI Assistant / Chatbot', desc:'Real-time X/Twitter-integrated AI with advanced reasoning modes.',
+        tiers:[{l:'Free — 10 prompts/2hr',p:0},{l:'SuperGrok — Full access',p:30},{l:'SuperGrok Heavy — Multi-agent',p:300}] },
+      { id:'x2', name:'Grok Business', cat:'AI Assistant / Chatbot', desc:'Team plan with higher rate limits, DeepSearch, and admin tools.',
+        tiers:[{l:'Business',p:30,label:'per seat/mo'},{l:'Enterprise',p:null,label:'Custom'}] },
+      { id:'x3', name:'Grok API', cat:'Developer Platform', desc:'Cheapest frontier model per token — up to 2M token context.',
+        tiers:[{l:'Grok 4.1 Fast',p:null,label:'$0.20/$0.50/MTok'},{l:'Grok 4',p:null,label:'$3/$15/MTok'},{l:'Grok 4 (2M ctx)',p:null,label:'$6/$30/MTok'}] },
+      { id:'x4', name:'Grok Imagine', cat:'Image Generation', desc:'Text-to-image via Aurora engine with social media optimized output.',
+        tiers:[{l:'Free (basic)',p:0},{l:'SuperGrok (unlimited)',p:30}] },
+    ]
+  },
+  {
+    id: 'microsoft', name: 'Microsoft', color: '#38bdf8',
+    tools: [
+      { id:'m1', name:'Microsoft Copilot', cat:'AI Assistant / Chatbot', desc:'GPT-5.4-powered AI across Windows, Edge, Teams, and web.',
+        tiers:[{l:'Free',p:0},{l:'Copilot Pro',p:20},{l:'M365 Copilot',p:30,label:'per user/mo'}] },
+      { id:'m2', name:'Copilot Studio', cat:'Developer Platform', desc:'Low-code platform for building custom AI agents and copilots.',
+        tiers:[{l:'Included in M365',p:30,label:'per user/mo'},{l:'Standalone',p:null,label:'Pay-per-use'}] },
+      { id:'m3', name:'Azure OpenAI', cat:'Developer Platform', desc:'Enterprise-grade OpenAI model access via Microsoft Azure.',
+        tiers:[{l:'Pay-as-you-go',p:null,label:'Usage-based'},{l:'Reserved capacity',p:null,label:'Custom'}] },
+    ]
+  },
+  {
+    id: 'github', name: 'GitHub', color: '#94a3b8',
+    tools: [
+      { id:'gh1', name:'GitHub Copilot', cat:'Coding Assistant', desc:'AI code completion in VS Code, JetBrains, Vim — multi-model choice.',
+        tiers:[{l:'Free — 2K completions/mo',p:0},{l:'Pro — Unlimited + chat',p:10},{l:'Pro+ — All models + Spark',p:39},{l:'Enterprise',p:21,label:'per seat/mo'}] },
+    ]
+  },
+];
+
+// ─── State ───
+let selected = {}; // id -> { tool, tierIndex, company }
+let currentFilter = 'all';
+
+// ─── Render sections ───
+function renderSections() {
+  const root = document.getElementById('sections-root');
+  root.innerHTML = '';
+  COMPANIES.forEach(company => {
+    const filtered = company.tools.filter(t => currentFilter === 'all' || t.cat === currentFilter);
+    if (!filtered.length) return;
+    const sec = document.createElement('div');
+    sec.className = 'section';
+    sec.innerHTML = `
+      <div class="section-header">
+        <div class="section-dot bg-${company.id}" style="background:${company.color}"></div>
+        <div class="section-name c-${company.id}" style="color:${company.color}">${company.name}</div>
+        <div class="section-line"></div>
+        <div class="section-count">${filtered.length} tool${filtered.length!==1?'s':''}</div>
+      </div>
+      <div class="cards-grid">${filtered.map(t => renderCard(t, company)).join('')}</div>
+    `;
+    root.appendChild(sec);
+  });
+}
+
+function renderCard(tool, company) {
+  const sel = selected[tool.id];
+  const tierIdx = sel ? sel.tierIndex : 0;
+  const tier = tool.tiers[tierIdx];
+  const priceStr = tier.p === null ? (tier.label || 'Usage-based') : (tier.p === 0 ? 'Free' : `$${tier.p}/mo`);
+  const isAdded = !!sel;
+  return `
+    <div class="tool-card ${isAdded ? 'selected border-'+company.id : ''}" id="card-${tool.id}">
+      <div class="card-top">
+        <div>
+          <div class="card-name">${tool.name}</div>
+          <div class="card-cat">${tool.cat}</div>
+        </div>
+        <button class="add-btn ${isAdded ? 'added' : ''}" onclick="toggleTool('${tool.id}','${company.id}')" title="${isAdded ? 'Remove' : 'Add to stack'}">
+          ${isAdded ? '✓' : '+'}
+        </button>
+      </div>
+      <div class="card-desc">${tool.desc}</div>
+      <div class="tier-select-wrap">
+        <select class="tier-select" id="sel-${tool.id}" onchange="changeTier('${tool.id}','${company.id}',this.value)">
+          ${tool.tiers.map((t,i) => `<option value="${i}" ${i===tierIdx?'selected':''}>${t.l}</option>`).join('')}
+        </select>
+        <div class="tier-arrow">▾</div>
+      </div>
+      <div class="card-price">
+        <span class="price-val">${priceStr}</span>
+        <span class="price-period">${tier.p !== null && tier.p > 0 ? 'per month' : tier.p === 0 ? 'always free' : ''}</span>
+      </div>
+    </div>`;
+}
+
+function toggleTool(toolId, companyId) {
+  const tool = findTool(toolId);
+  const company = COMPANIES.find(c => c.id === companyId);
+  if (selected[toolId]) {
+    delete selected[toolId];
+    showToast(`Removed ${tool.name}`);
+  } else {
+    const tierIdx = parseInt(document.getElementById('sel-'+toolId)?.value || '0');
+    selected[toolId] = { tool, tierIndex: tierIdx, company };
+    showToast(`Added ${tool.name}`);
+  }
+  updateCard(toolId, companyId);
+  updateSidebar();
+}
+
+function changeTier(toolId, companyId, val) {
+  const tierIdx = parseInt(val);
+  if (selected[toolId]) {
+    selected[toolId].tierIndex = tierIdx;
+    updateSidebar();
+  }
+  updateCardPrice(toolId, tierIdx);
+}
+
+function updateCardPrice(toolId, tierIdx) {
+  const tool = findTool(toolId);
+  if (!tool) return;
+  const tier = tool.tiers[tierIdx];
+  const card = document.getElementById('card-'+toolId);
+  if (!card) return;
+  const pv = card.querySelector('.price-val');
+  const pp = card.querySelector('.price-period');
+  if (pv) pv.textContent = tier.p === null ? (tier.label||'Usage-based') : tier.p === 0 ? 'Free' : `$${tier.p}/mo`;
+  if (pp) pp.textContent = tier.p !== null && tier.p > 0 ? 'per month' : tier.p === 0 ? 'always free' : '';
+}
+
+function updateCard(toolId, companyId) {
+  const card = document.getElementById('card-'+toolId);
+  if (!card) return;
+  const isAdded = !!selected[toolId];
+  const btn = card.querySelector('.add-btn');
+  if (btn) { btn.className = `add-btn ${isAdded?'added':''}`; btn.textContent = isAdded ? '✓' : '+'; }
+  card.className = `tool-card ${isAdded ? 'selected border-'+companyId : ''}`;
+  if (isAdded) card.style.setProperty('--accent', COMPANIES.find(c=>c.id===companyId)?.color||'#fff');
+}
+
+function findTool(toolId) {
+  for (const c of COMPANIES) { const t = c.tools.find(t=>t.id===toolId); if (t) return t; }
+  return null;
+}
+
+// ─── Sidebar ───
+function updateSidebar() {
+  const list = document.getElementById('stack-list');
+  const empty = document.getElementById('stack-empty');
+  const keys = Object.keys(selected);
+  empty.style.display = keys.length ? 'none' : 'block';
+
+  // Remove items not in selected
+  Array.from(list.querySelectorAll('.stack-item')).forEach(el => {
+    if (!selected[el.dataset.id]) el.remove();
+  });
+
+  // Add/update items
+  keys.forEach(id => {
+    const { tool, tierIndex, company } = selected[id];
+    const tier = tool.tiers[tierIndex];
+    const priceStr = tier.p === null ? (tier.label||'Usage') : tier.p === 0 ? 'Free' : `$${tier.p}`;
+    let existing = list.querySelector(`.stack-item[data-id="${id}"]`);
+    if (!existing) {
+      existing = document.createElement('div');
+      existing.className = 'stack-item';
+      existing.dataset.id = id;
+      list.insertBefore(existing, empty);
+    }
+    existing.innerHTML = `
+      <div class="stack-item-dot" style="background:${company.color}"></div>
+      <div class="stack-item-info">
+        <div class="stack-item-name">${tool.name}</div>
+        <div class="stack-item-tier">${tier.l}</div>
+      </div>
+      <div class="stack-item-price">${priceStr}</div>
+      <button class="stack-remove" onclick="toggleTool('${id}','${company.id}')" title="Remove">✕</button>`;
+  });
+
+  // Totals
+  let monthly = 0;
+  keys.forEach(id => {
+    const { tool, tierIndex } = selected[id];
+    const p = tool.tiers[tierIndex].p;
+    if (p && p > 0) monthly += p;
+  });
+
+  const countEl = document.getElementById('tool-count');
+  const totalEl = document.getElementById('monthly-total');
+  const annualEl = document.getElementById('annual-total');
+  const annualRow = document.getElementById('annual-row');
+  countEl.textContent = `${keys.length} tool${keys.length!==1?'s':''} selected`;
+  totalEl.textContent = monthly === 0 ? '$0' : `$${monthly.toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:2})}`;
+  if (monthly > 0) {
+    annualRow.style.display = 'flex';
+    annualEl.textContent = `$${(monthly*12).toLocaleString('en-US',{minimumFractionDigits:0,maximumFractionDigits:0})}/yr`;
+  } else {
+    annualRow.style.display = 'none';
+  }
+}
+
+function clearAll() {
+  const keys = Object.keys(selected);
+  keys.forEach(id => {
+    const s = selected[id];
+    delete selected[id];
+    updateCard(id, s.company.id);
+  });
+  selected = {};
+  updateSidebar();
+  showToast('Stack cleared');
+}
+
+// ─── Share modal ───
+function openShareModal() {
+  const keys = Object.keys(selected);
+  if (!keys.length) { showToast('Add tools to your stack first'); return; }
+  let monthly = 0;
+  let lines = [];
+  lines.push('╔══════════════════════════════════════════╗');
+  lines.push('║         MY AI STACK — 2026               ║');
+  lines.push('╚══════════════════════════════════════════╝');
+  lines.push('');
+
+  // Group by company
+  const byCompany = {};
+  keys.forEach(id => {
+    const { tool, tierIndex, company } = selected[id];
+    if (!byCompany[company.name]) byCompany[company.name] = [];
+    byCompany[company.name].push({ tool, tierIndex });
+  });
+
+  Object.entries(byCompany).forEach(([cname, items]) => {
+    lines.push(`▸ ${cname}`);
+    items.forEach(({ tool, tierIndex }) => {
+      const tier = tool.tiers[tierIndex];
+      const p = tier.p;
+      const priceStr = p === null ? (tier.label||'Usage-based') : p === 0 ? 'Free' : `$${p}/mo`;
+      if (p && p > 0) monthly += p;
+      lines.push(`  • ${tool.name.padEnd(22)} ${priceStr}`);
+      lines.push(`    ${tier.l}`);
+    });
+    lines.push('');
+  });
+
+  lines.push('──────────────────────────────────────────');
+  lines.push(`  Monthly Total:   $${monthly.toLocaleString()}`);
+  lines.push(`  Annual Estimate: $${(monthly*12).toLocaleString()}`);
+  lines.push('──────────────────────────────────────────');
+  lines.push('');
+  lines.push('Pricing verified March 2026. Built with');
+  lines.push('AI Stack Calculator — aistackcalc.com');
+
+  document.getElementById('share-box').textContent = lines.join('\n');
+  document.getElementById('copy-confirm').textContent = '';
+  document.getElementById('modal-overlay').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal-overlay').classList.remove('open'); }
+
+function copyToClipboard() {
+  const text = document.getElementById('share-box').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    document.getElementById('copy-confirm').textContent = '✓ Copied to clipboard!';
+    showToast('Stack copied to clipboard');
+    setTimeout(() => document.getElementById('copy-confirm').textContent = '', 3000);
+  });
+}
+
+// ─── Toast ───
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ─── Filters ───
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    renderSections();
+    // Restore add-btn states
+    Object.keys(selected).forEach(id => {
+      const s = selected[id];
+      updateCard(id, s.company.id);
+    });
+  });
+});
+
+// ─── Init ───
+renderSections();
+updateSidebar();
+</script>
+</body>
+</html>
